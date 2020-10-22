@@ -1,4 +1,4 @@
-# Scrapy settings for news project
+# Scrapy settings for Netease_news project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -7,18 +7,20 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'news'
+BOT_NAME = 'Netease_news'
 
-SPIDER_MODULES = ['news.spiders']
-NEWSPIDER_MODULE = 'news.spiders'
+SPIDER_MODULES = ['Netease_news.spiders']
+NEWSPIDER_MODULE = 'Netease_news.spiders'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'news (+http://www.yourdomain.com)'
+#USER_AGENT = 'Netease_news (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
 
+# The maximum depth that will be allowed to crawl for any site. If zero, no limit will be imposed.
+DEPTH_LIMIT = 6
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
 
@@ -37,34 +39,34 @@ ROBOTSTXT_OBEY = True
 #TELNETCONSOLE_ENABLED = False
 
 # Override the default request headers:
-#DEFAULT_REQUEST_HEADERS = {
+# DEFAULT_REQUEST_HEADERS = {
 #   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
 #   'Accept-Language': 'en',
-#}
+# }
 
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-#SPIDER_MIDDLEWARES = {
-#    'news.middlewares.NewsSpiderMiddleware': 543,
-#}
+# SPIDER_MIDDLEWARES = {
+#    'Netease_news.middlewares.NeteaseNewsSpiderMiddleware': 543,
+# }
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
-#    'news.middlewares.NewsDownloaderMiddleware': 543,
-#}
+# DOWNLOADER_MIDDLEWARES = {
+#    'Netease_news.middlewares.NeteaseNewsDownloaderMiddleware': 543,
+# }
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
-#EXTENSIONS = {
+# EXTENSIONS = {
 #    'scrapy.extensions.telnet.TelnetConsole': None,
-#}
+# }
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'news.pipelines.NewsPipeline': 300,
-#}
+# ITEM_PIPELINES = {
+#    'Netease_news.pipelines.NeteaseNewsPipeline': 300,
+# }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

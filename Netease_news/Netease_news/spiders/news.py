@@ -1,7 +1,10 @@
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 from ..items import NeteaseNewsItem
+from scrapy.exporters import JsonItemExporter
 import time
+import json
+from itemadapter import ItemAdapter
 
 
 class NewsSpider(CrawlSpider):
@@ -30,7 +33,7 @@ class NewsSpider(CrawlSpider):
         self.get_time(item, response)
         self.get_source(item, response)
         self.get_content(item, response)
-        self.write_to_txt(item)
+        self.write_to_json(item)
         return item
 
     def get_title(self, item: NeteaseNewsItem, response):
@@ -89,3 +92,8 @@ class NewsSpider(CrawlSpider):
             f.write('depth: {}\n'.format(item['depth']).encode())
             # f.write('province: {}\n'.format(item['province']).encode())
             f.write(('-'*20 + '\n').encode())
+
+    def write_to_json(self, item):
+        timestamp = time.strftime("%Y%m%d%H", time.localtime())
+        with open('news_163'+timestamp+'.json', 'a') as f:
+            json.dump(ItemAdapter(item).asdict(), f, ensure_ascii=False)

@@ -1,15 +1,14 @@
-
 import heapq
+import copy
 import json
 import jieba
-import pandas
-from pyspark import SparkConf, SparkContext
 from pyspark.ml.feature import HashingTF, IDF, Tokenizer
 from pyspark.sql import SparkSession
 
-
 class Cluster:
+    # 初始化
     def __init__(self, file_name):
+        # spark初始化
         self.spark = SparkSession.builder.appName("NewsAnalysis").getOrCreate()
         self.len = 0
         self.all_news = []
@@ -125,19 +124,56 @@ class Cluster:
         self.gettimekeyword()
         self.spark.stop()
 
-    # def getsame(self,num):
+    def getsame(self,num):
+        self.tfidf()
+        tmpsame=[]
+        for i in range(self.len):
+            combine_keyword=copy.copy(self.everykeyword[num])
+            if i==num:
+                tmpsame.append(0)
+            else:
+
+                for word in self.everykeyword[i]:
+                    combine_keyword.append(word)
+                combine_keyword=list(set(combine_keyword))
+                vec1=[]
+                vec2=[]
+                for j in range(len(combine_keyword)):
+                    vec1.append(0)
+                    vec2.append(0)
+                for word in self.all_words[num]:
+                    if word in combine_keyword:
+                        vec1[combine_keyword.index(word)]+=1
+                for word in self.all_words[i]:
+                    if word in combine_keyword:
+                        vec2[combine_keyword.index(word)]+=1
+
+                up=dianji(vec1,vec2)
+                down=fanshu(vec1)*fanshu(vec2)
+
+                tmpsame.append(up/down)
+
+        print(self.all_news[num]['title'])
+        index = top(tmpsame,10)
+        print(index)
+
+        print("-----------------------------------")
+
+        for idex in index:
+            print(self.all_news[idex]['title'])
+
 
 
     def geteverykeyword(self):
         for i in range(self.len):
-            index20 = top20(self.tfidfdata[i])
+            index20 = top(self.tfidfdata[i],20)
             out20=[]
             for idex in index20:
                 out20.append(self.all_words[i][idex])
             self.everykeyword.append(out20)
 
     def gettimekeyword(self):
-        index20 = top20(self.timetfidfdata[len(self.timetfidfdata)-1])
+        index20 = top(self.timetfidfdata[len(self.timetfidfdata)-1],20)
         out20 = []
 
         for idex in index20:
@@ -145,15 +181,32 @@ class Cluster:
 
         self.timekeyword=out20
 
+def dianji(vec1,vec2):
+    oc=0
+    for i in range(len(vec1)):
+        oc+=vec1[i]*vec2[i]
+    return oc
+def fanshu(vec):
+    oc=0
+    for i in range(len(vec)):
+        oc+=vec[i]*vec[i]
+    return oc**0.5
 
-def top20(onearray):
-    tmp = dict(zip(range(len(onearray)), onearray))
-    large20 = heapq.nlargest(20, tmp)
-    return large20
+def top(onearray,n):
+    if not isinstance(onearray,list):
+        onearray=onearray.tolist()
+
+    newone=copy.copy(onearray)
+    newone.sort()
+    newone.reverse()
+
+    large=[]
+    for i in range(min(len(onearray),n)):
+        large.append(onearray.index(newone[i]))
+    return large
 
 
 if __name__ == "__main__":
     cluster = Cluster('news.json')
     cluster.read()
-    cluster.timetfidf(400,500)
-    print(cluster.timekeyword)
+    cluster.getsame(500)

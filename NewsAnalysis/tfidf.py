@@ -317,9 +317,12 @@ class Cluster:
 
             self.attention.append((points-1)/(self.all_time[i]+2))
 
+        maxi=max(self.attention)
+        mini=min(self.attention)
+
         for i in range(self.len):
 
-            self.attention[i]=(self.attention[i]-min(self.attention))/(max(self.attention)-min(self.attention))*100
+            self.attention[i]=(self.attention[i]-mini)/(maxi-mini)*100
 
 
     # 取得前20个关键词，按照tfidf值
@@ -378,5 +381,6 @@ if __name__ == "__main__":
     cluster.read()
     cluster.getsame()
     cluster.get_attention()
+    print(cluster.attention)
     # cluster.getsame()
     # cluster.print_same(500)

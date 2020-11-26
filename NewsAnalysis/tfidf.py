@@ -1,44 +1,57 @@
+import os
 import copy
 import json
 import time
-
+from pyspark.sql import SparkSession
+from pyspark.streaming import StreamingContext
 
 # 导入分词jieba
 import jieba
 
 # 导入spark ml库
 from pyspark.ml.feature import HashingTF, IDF, Tokenizer
-from pyspark.sql import SparkSession
-
 
 class Cluster:
     # 初始化
     def __init__(self, file_name):
-        # spark初始化
-        self.spark = SparkSession.builder.appName("NewsAnalysis").getOrCreate()
+
+        # spark streaming初始化
+        self.spark = SparkSession.builder.appName("NewsAnalysis").master("local[*]").getOrCreate()
+
+        self.sc = self.spark.sparkContext
+
+        self.ssc = StreamingContext(self.sc, 10)
+
         self.len = 0
 
-        self.nowtime=time.time()
+        self.nowtime = time.time()
 
         # 存放所有新闻的所有属性
         self.all_news = []
+
         # 存放所有新闻的内容
         self.all_content = []
+
         # 存放所有新闻的单词
         self.all_words = []
 
-        self.all_time=[]
+        # 存放所有新闻的时间
+        self.all_time = []
 
         # 存放tfidf值
         self.tfidfdata = []
+
         # 存放时间段的tfidf值
         self.timetfidfdata = []
+
         # 存放每篇新闻关键词
         self.everykeyword = []
+
         # 存放时间段模式的关键词
         self.timekeyword = []
-        #存放热度
-        self.attention=[]
+
+        # 存放热度
+        self.attention = []
 
         # 存放时间段内单词
         self.nowwords = []
@@ -46,7 +59,9 @@ class Cluster:
         # 存放每篇文章对应其他文章的相似度
         self.similarity = []
 
+        # 监听文件夹名
         self.file_name = file_name
+
         # 停用词表
         self.stopwords = [line.strip() for line in open('stop_words.txt', encoding='UTF-8').readlines()]
 
@@ -64,7 +79,7 @@ class Cluster:
         return out, outlist
 
     def read(self):
-        # 读取json文件，并分割新闻
+        # 监听json文件，并分割新闻，中文分词，去除停用词
         json_file = open(self.file_name, encoding='utf-8').read()
         objs = json_file.replace('}{', '}abc{')
         objs = objs.split('abc')
@@ -87,7 +102,9 @@ class Cluster:
                     self.all_news.append(data)
                     self.all_content.append(outstr)
                     self.all_words.append(outwords)
-                    self.all_time.append(int((self.nowtime-time.mktime(time.strptime(data['time'], "%Y-%m-%d %H:%M:%S")))/(24*60*60)))
+                    self.all_time.append(int(
+                        (self.nowtime - time.mktime(time.strptime(data['time'], "%Y-%m-%d %H:%M:%S"))) / (
+                                24 * 60 * 60)))
                     i += 1
 
         self.len = len(self.all_news)
@@ -235,7 +252,7 @@ class Cluster:
         for idex in index:
             print(self.all_news[idex]['title'])
 
-    # 第num篇文章的相似文本聚类
+    # 所有文章的相似文本聚类
     def getsame(self):
 
         # 求tfidf，并取得关键词
@@ -291,6 +308,7 @@ class Cluster:
 
             self.similarity.append(tmpsame)
 
+    # getsame方法对应的print方法
     def print_same(self, num):
         # 打印第num篇文章标题
         print(self.all_news[num]['title'])
@@ -302,28 +320,26 @@ class Cluster:
         for idex in index:
             print(self.all_news[idex]['title'])
 
-    #利用hacker news热度算法进行计算，其中投票在这里改写为相似度超过30%的新闻数
-    #详情参见https://blog.csdn.net/ouzhuangzhuang/article/details/82467949?utm_medium=distribute.pc_relevant_t0.none-task-blog-searchFromBaidu-1.control&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-searchFromBaidu-1.control
+    # 利用hacker news热度算法进行计算，其中投票在这里改写为相似度超过30%的新闻数
+    # 详情参见https://blog.csdn.net/ouzhuangzhuang/article/details/82467949?utm_medium=distribute.pc_relevant_t0.none-task-blog-searchFromBaidu-1.control&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-searchFromBaidu-1.control
     def get_attention(self):
 
-        g=9.8
+        g = 9.8
 
         for i in range(self.len):
 
-            points=0
+            points = 0
             for j in self.similarity[i]:
-                if j>=0.3:
-                    points+=1
+                if j >= 0.3:
+                    points += 1
 
-            self.attention.append((points-1)/(self.all_time[i]+2))
+            self.attention.append((points - 1) / (self.all_time[i] + 2))
 
-        maxi=max(self.attention)
-        mini=min(self.attention)
+        maxi = max(self.attention)
+        mini = min(self.attention)
 
         for i in range(self.len):
-
-            self.attention[i]=(self.attention[i]-mini)/(maxi-mini)*100
-
+            self.attention[i] = (self.attention[i] - mini) / (maxi - mini) * 100
 
     # 取得前20个关键词，按照tfidf值
     def geteverykeyword(self):
@@ -377,10 +393,12 @@ def top(onearray, n):
 
 
 if __name__ == "__main__":
-    cluster = Cluster('news.json')
-    cluster.read()
-    cluster.getsame()
-    cluster.get_attention()
-    print(cluster.attention)
+    os.environ['PYSPARK_PYTHON'] = '../venv/bin/python3.8'  # 在实际使用时，请注释掉
+
+    cluster = Cluster('../Data/news.json')
+    # cluster.read()
+    # cluster.getsame()
+    # cluster.get_attention()
+    # print(cluster.attention)
     # cluster.getsame()
     # cluster.print_same(500)

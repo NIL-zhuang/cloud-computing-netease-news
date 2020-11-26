@@ -59,6 +59,8 @@ class Cluster:
         # 存放每篇文章对应其他文章的相似度
         self.similarity = []
 
+        self.samenews=[]
+
         # 监听文件夹名
         self.file_name = file_name
 
@@ -141,9 +143,6 @@ class Cluster:
         for row in rescaledData.select('features').collect():
             self.tfidfdata.append(row["features"].values)
 
-        # 停止
-        self.spark.stop()
-
         # 按照tfidf值取得每篇文章的关键词
         self.everykeyword = []
         self.geteverykeyword()
@@ -194,9 +193,6 @@ class Cluster:
 
     # 第num篇文章的相似文本聚类
     def getonesame(self, num):
-
-        # 求tfidf，并取得关键词
-        self.tfidf()
 
         # tmpsame数组相似度
         tmpsame = []
@@ -255,9 +251,6 @@ class Cluster:
     # 所有文章的相似文本聚类
     def getsame(self):
 
-        # 求tfidf，并取得关键词
-        self.tfidf()
-
         for num in range(self.len):
 
             print(num)
@@ -308,21 +301,34 @@ class Cluster:
 
             self.similarity.append(tmpsame)
 
-    # getsame方法对应的print方法
-    def print_same(self, num):
-        # 打印第num篇文章标题
-        print(self.all_news[num]['title'])
-        index = top(self.similarity[num], 10)
+            index = top(tmpsame, 10)
 
-        print("-----------------------------------")
+            outnews=[]
 
-        # 打印相似度最高10个的新闻标题
-        for idex in index:
-            print(self.all_news[idex]['title'])
+            for idex in index:
+                outnews.append(self.all_news[idex]['title'])
+
+            self.samenews.append(outnews)
+
+    # 存储json文件
+    def saveall(self):
+
+        outlist1=[]
+        for i in range(self.len):
+            outlist1.append({'title':self.all_news[i]['title'],'attention':self.attention[i],'keyword':self.everykeyword[i],'samenews':self.samenews[i]})
+
+        with open('../OutDir/out.json', 'w',encoding='utf-8') as f:
+            json.dump(outlist1, f,ensure_ascii=False)
+
+        with open('../OutDir/outtime.json', 'w',encoding='utf-8') as f:
+            json.dump({'timekeyword':self.timekeyword}, f,ensure_ascii=False)
+
 
     # 利用hacker news热度算法进行计算，其中投票在这里改写为相似度超过30%的新闻数
     # 详情参见https://blog.csdn.net/ouzhuangzhuang/article/details/82467949?utm_medium=distribute.pc_relevant_t0.none-task-blog-searchFromBaidu-1.control&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-searchFromBaidu-1.control
     def get_attention(self):
+
+        self.attention=[]
 
         g = 9.8
 
@@ -361,6 +367,7 @@ class Cluster:
         self.timekeyword = out20
 
 
+
 # 求两个向量的点积
 def dianji(vec1, vec2):
     oc = 0
@@ -392,13 +399,16 @@ def top(onearray, n):
     return large
 
 
+
 if __name__ == "__main__":
     os.environ['PYSPARK_PYTHON'] = '../venv/bin/python3.8'  # 在实际使用时，请注释掉
 
-    cluster = Cluster('../Data/news.json')
-    # cluster.read()
-    # cluster.getsame()
-    # cluster.get_attention()
-    # print(cluster.attention)
-    # cluster.getsame()
-    # cluster.print_same(500)
+    cluster = Cluster('../Data/news.json')#文件名注意修改
+    cluster.read()
+    cluster.tfidf()
+    cluster.timetfidf(cluster.len-250,cluster.len-1)
+    cluster.geteverykeyword()
+    cluster.gettimekeyword()
+    cluster.getsame()
+    cluster.get_attention()
+    cluster.saveall()

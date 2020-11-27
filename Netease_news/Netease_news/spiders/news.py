@@ -6,6 +6,7 @@ import time
 import json
 from itemadapter import ItemAdapter
 import re
+import jieba
 
 
 class NewsSpider(CrawlSpider):
@@ -13,32 +14,31 @@ class NewsSpider(CrawlSpider):
     allowed_domains = ['163.com']
     # 起始url地址，从这个地方开始抓取数据
     start_urls = ['https://www.163.com']
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36',
-    }
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36', }
     # 匹配网易新闻的所有频道但是孤立订阅号
-    rules = (Rule(LinkExtractor(allow=r"https://[\w|.]{2,10}.163.com/\d{2}/\d{4}/\d{2}/[\w]{16}.html.*"),   # 这个正则表达式用来匹配网易新闻的url，不包括订阅号
+    # 这个正则表达式用来匹配网易新闻的url，不包括订阅号
+    rules = (Rule(LinkExtractor(allow=r"https://[\w|.]{2,10}.163.com/\d{2}/\d{4}/\d{2}/[\w]{16}.html.*"),
                   callback='parse_item', follow=True),)
 
-    pattern = re.compile(
-        r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+    pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
 
     with open("news.json") as f:
         string = f.read()
     url_set = set(re.findall(pattern, string))
     print("current news:"+str(len(url_set)))
+    stopwords = [line.strip() for line in open('./Netease_news/stop_words.txt', encoding='UTF-8').readlines()]
 
     def parse_item(self, response):
         # 会在每个url完成下载后被调用，用于解析网页数据，提取结构化数据生成item
         item = NeteaseNewsItem()
-        item['url'] = str(response.url.encode()).split(
-            '?')[0].replace("b", '').replace("'", '')
+        item['url'] = str(response.url.encode()).split('?')[0].replace("b", '').replace("'", '')
         item['depth'] = response.meta['depth']
         self.get_title(item, response)
         self.get_section(item)
         self.get_time(item, response)
         self.get_source(item, response)
         self.get_content(item, response)
+        self.write_to_txt(item)
         if item['url'] not in self.url_set:
             self.write_to_json(item)
             self.url_set.add(item['url'])
@@ -89,11 +89,23 @@ class NewsSpider(CrawlSpider):
         else:
             item['province'] = item['url'].strip("https://").split('.')[0]
 
-    def write_to_txt(self, item):
-        timestamp = time.strftime("%Y%m%d%H%M", time.localtime())
+    def write_to_txt(self, item: NeteaseNewsItem):
+        timestamp = time.strftime("%Y%m%d%H", time.localtime())
         with open(timestamp+'.txt', 'ab') as f:
-            pass
+            str = ' '.join([tmpstr for tmpstr in item['content']])
+            seg = jieba.lcut(str, cut_all=False)
+            # print(seg)
+            outwords = self.stop_to_str(seg)
+            f.write((' '.join(outwords)).encode())
 
-    def write_to_json(self, item):
+    def write_to_json(self, item: NeteaseNewsItem):
         with open('news.json', 'a') as f:   # 将新闻写进同一个json
             json.dump(ItemAdapter(item).asdict(), f, ensure_ascii=False)
+
+    def stop_to_str(self, seg):
+        outlist = []
+        for word in seg:
+            if word not in self.stopwords:
+                outlist.append(word)
+        # out是分割单词后的语句，outlist是所有分割单词
+        return outlist

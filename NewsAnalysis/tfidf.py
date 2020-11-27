@@ -11,6 +11,12 @@ import jieba
 # 导入spark ml库
 from pyspark.ml.feature import HashingTF, IDF, Tokenizer
 
+# 调用HDFS中的文件
+from pyspark import SparkContext
+
+# 检查HDFS中的文件是否存在
+import subprocess
+
 class Cluster:
     # 初始化
     def __init__(self, file_name):
@@ -398,6 +404,45 @@ def top(onearray, n):
         large.append(onearray.index(newone[i]))
     return large
 
+def wordCount():
+    inputFile = 'hdfs://master:9000/temp/hdin/*'  # 文档地址
+    outputFile = 'hdfs://master:9000/temp/spark-out'  # 结果目录
+    txtNum = 0
+    inputFile = inputFile + str(txtNum)  #这里视为文档规律命名，实际情况中需要调整
+    txtNum += 1
+
+    sc = SparkContext('local', 'wordcount')
+    text_file = sc.textFile(inputFile)
+
+    counts = text_file.flatMap(lambda line: line.split(' ')).map(lambda word: (word, 1)).reduceByKey(lambda a, b: a + b)
+    counts.saveAsTextFile(outputFile)
+
+def listening_wordCount():
+    sc = SparkContext(appName="")
+    ssc = StreamingContext(sc,90)
+    text_file = ssc.textFileStream("")   # 文本文件目录
+    outputFile = ''  # 结果存储目录
+
+    counts = text_file.flatMap(lambda line: line.split(' ')).map(lambda word: (word, 1)).reduceByKey(lambda a, b: a + b)
+    counts.saveAsTextFile(outputFile)
+
+'''
+def tryHdfsPath(location):
+    filexistchk = "hdfs dfs -test -e " + location + ";echo $?"
+    # echo $? will print the exit code of previously execited command
+    filexistchk_output = subprocess.Popen(filexistchk, shell=True, stdout=subprocess.PIPE).communicate()
+    filechk = "hdfs dfs -test -d " + location + ";echo $?"
+    filechk_output = subprocess.Popen(filechk, shell=True, stdout=subprocess.PIPE).communicate()
+    # Check if location exists
+    if '1' not in str(filexistchk_output[0]):
+        # check if its a directory
+        if '1' not in str(filechk_output[0]):
+            print('The given URI is a directory: ' + location)
+        else:
+            print('The given URI is a file: ' + location)
+    else:
+        print(location + " does not exist. Please check the URI")
+'''
 
 
 if __name__ == "__main__":

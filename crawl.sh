@@ -1,3 +1,4 @@
 #!/bin/bash
 cd Netease_news
-scrapy crawl news
+rm crawl.log
+scrapy crawl news -s LOG_FILE=crawl.log

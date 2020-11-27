@@ -5,12 +5,13 @@ from scrapy.exporters import JsonItemExporter
 import time
 import json
 from itemadapter import ItemAdapter
+import re
 
 
 class NewsSpider(CrawlSpider):
     name = 'news'
     allowed_domains = ['163.com']
-    # 起始url地址，从这个地方开 始抓取数据
+    # 起始url地址，从这个地方开始抓取数据
     start_urls = ['https://www.163.com']
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36',
@@ -19,18 +20,28 @@ class NewsSpider(CrawlSpider):
     rules = (Rule(LinkExtractor(allow=r"https://[\w|.]{2,10}.163.com/\d{2}/\d{4}/\d{2}/[\w]{16}.html.*"),   # 这个正则表达式用来匹配网易新闻的url，不包括订阅号
                   callback='parse_item', follow=True),)
 
+    pattern = re.compile(
+        r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+
+    with open("news.json") as f:
+        string = f.read()
+    url_set = set(re.findall(pattern, string))
+    print("current news:"+str(len(url_set)))
+
     def parse_item(self, response):
         # 会在每个url完成下载后被调用，用于解析网页数据，提取结构化数据生成item
         item = NeteaseNewsItem()
-        item['url'] = response.url
+        item['url'] = str(response.url.encode()).split(
+            '?')[0].replace("b", '').replace("'", '')
         item['depth'] = response.meta['depth']
         self.get_title(item, response)
         self.get_section(item)
         self.get_time(item, response)
         self.get_source(item, response)
         self.get_content(item, response)
-        # self.get_province(item, response)
-        self.write_to_json(item)
+        if item['url'] not in self.url_set:
+            self.write_to_json(item)
+            self.url_set.add(item['url'])
         return item
 
     def get_title(self, item: NeteaseNewsItem, response):
@@ -58,8 +69,6 @@ class NewsSpider(CrawlSpider):
         source = response.css('div.post_time_source a::text').extract()
         if source:
             item['source'] = source[0]
-        else:
-            print(source)
 
     def get_content(self, item: NeteaseNewsItem, response):
         # 获取新闻正文
@@ -73,8 +82,6 @@ class NewsSpider(CrawlSpider):
 
         if text:
             item['content'] = change_text(text)
-        else:
-            print(text)
 
     def get_province(self, item: NeteaseNewsItem,  response):
         if ".news" not in item['url']:
@@ -83,20 +90,10 @@ class NewsSpider(CrawlSpider):
             item['province'] = item['url'].strip("https://").split('.')[0]
 
     def write_to_txt(self, item):
-        timestamp = time.strftime("%Y%m%d%H", time.localtime())
-        with open('news'+timestamp+'.txt', 'ab') as f:
-            # f.seek(0)
-            f.write('title: {}\n'.format(item['title']).encode())
-            f.write('section: {}\n'.format(item['section']).encode())
-            f.write('url: {}\n'.format(item['url']).encode())
-            f.write('time: {}\n'.format(item['time']).encode())
-            f.write('source: {}\n'.format(item['source']).encode())
-            f.write('content: {}\n'.format(item['content']).encode())
-            f.write('depth: {}\n'.format(item['depth']).encode())
-            # f.write('province: {}\n'.format(item['province']).encode())
-            f.write(('-'*20 + '\n').encode())
+        timestamp = time.strftime("%Y%m%d%H%M", time.localtime())
+        with open(timestamp+'.txt', 'ab') as f:
+            pass
 
     def write_to_json(self, item):
-        timestamp = time.strftime("%Y%m%d%H", time.localtime())
-        with open('news'+timestamp+'.json', 'a') as f:
+        with open('news.json', 'a') as f:   # 将新闻写进同一个json
             json.dump(ItemAdapter(item).asdict(), f, ensure_ascii=False)

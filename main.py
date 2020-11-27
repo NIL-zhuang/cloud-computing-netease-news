@@ -1,6 +1,8 @@
 import time
 import os
 while True:
+    print("=== start crawl ===")
     os.system("./crawl.sh")
     os.system("./move.sh")
-    time.sleep(3600)
+    print("=== finish crawl ===")
+    time.sleep(1800)

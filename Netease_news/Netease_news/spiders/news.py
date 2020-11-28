@@ -34,6 +34,7 @@ class NewsSpider(CrawlSpider):
         item['url'] = str(response.url.encode()).split('?')[0].replace("b", '').replace("'", '')
         item['depth'] = response.meta['depth']
         self.get_title(item, response)
+        print(item['title'])
         self.get_section(item)
         self.get_time(item, response)
         self.get_source(item, response)

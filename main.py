@@ -5,4 +5,4 @@ while True:
     os.system("./crawl.sh")
     os.system("./move.sh")
     print("=== finish crawl ===")
-    time.sleep(600)
+    time.sleep(1800)

@@ -33,6 +33,7 @@ if __name__ == "__main__":
     item_list = []
     cur_time = time.strftime("%Y-%m-%d %H:%M", time.localtime())
     for dirs in os.listdir("./wct"):
+        # dir是时间戳 todo 修改
         data = get_count("./wct/"+dirs+"/part-00000")
         if data is None:
             shutil.rmtree("./wct/"+dirs)

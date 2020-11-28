@@ -9,6 +9,6 @@ for filename in $files; do
     fi
     if [ "${filename##*.}" = "txt" ]; then
         hdfs dfs -put $path/filename /data
-        mv $path/$filename data/$filename
+        mv $path/$filename /data
     fi
 done

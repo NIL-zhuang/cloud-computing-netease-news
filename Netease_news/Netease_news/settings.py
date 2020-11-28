@@ -20,7 +20,7 @@ NEWSPIDER_MODULE = 'Netease_news.spiders'
 ROBOTSTXT_OBEY = False
 
 # The maximum depth that will be allowed to crawl for any site. If zero, no limit will be imposed.
-DEPTH_LIMIT = 2
+DEPTH_LIMIT = 3
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
 

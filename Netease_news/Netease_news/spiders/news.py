@@ -90,9 +90,9 @@ class NewsSpider(CrawlSpider):
             item['province'] = item['url'].strip("https://").split('.')[0]
 
     def write_to_txt(self, item: NeteaseNewsItem):
-        timestamp = time.strftime("%Y%m%d%H", time.localtime())
+        timestamp = time.strftime("%Y%m%d%H%M", time.localtime())
         with open(timestamp+'.txt', 'ab') as f:
-            str = ' '.join([tmpstr for tmpstr in item['content']])
+            str = ' '.join([tmpstr for tmpstr in item['content'] if len(tmpstr) > 0])
             seg = jieba.lcut(str, cut_all=False)
             # print(seg)
             outwords = self.stop_to_str(seg)

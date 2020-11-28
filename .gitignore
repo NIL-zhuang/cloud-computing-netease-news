@@ -6,7 +6,7 @@ __pycache__/
 # C extensions
 *.so
 *.txt
-*.json
+# *.json
 .idea/
 # Distribution / packaging
 .Python

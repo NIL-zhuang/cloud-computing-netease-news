@@ -25,18 +25,18 @@ class Cluster:
         # spark streaming初始化
         self.spark = SparkSession.builder.appName("NewsAnalysis").getOrCreate()
 
-        self.sc = self.spark.sparkContext
+        # self.sc = self.spark.sparkContext
 
-        self.ssc = StreamingContext(self.sc, 20)
+        # self.ssc = StreamingContext(self.sc, 20)
 
-        self.out_stream = self.ssc.textFileStream("hdfs://mark-pc:9000/data")
+        # self.out_stream = self.ssc.textFileStream("hdfs://mark-pc:9000/data")
 
         self.len = 0
 
         self.nowtime = time.time()
 
-        word_count = self.out_stream.flatMap(lambda line: line.split(' ')).map(
-            lambda x: (x, 1)).reduceByKey(lambda x, y: x+y).repartition(1).saveAsTextFiles("./word")
+        # word_count = self.out_stream.flatMap(lambda line: line.split(' ')).map(
+            # lambda x: (x, 1)).reduceByKey(lambda x, y: x+y).repartition(1).saveAsTextFiles("./word")
 
         # 存放所有新闻的所有属性
         self.all_news = []
@@ -380,18 +380,20 @@ class Cluster:
 
         self.timekeyword = out20
 
-    def fake_main(self):
-        # os.environ['PYSPARK_PYTHON'] = '../venv/bin/python3.8'  # 在实际使用时，请注释掉
 
-        self.read()
-        self.tfidf()
-        self.timetfidf(cluster.len-250, cluster.len-1)
-        self.geteverykeyword()
-        self.gettimekeyword()
-        self.getsame()
-        self.get_attention()
-        self.saveall()
-
+    def clean(self):
+        self.attention=[]
+        self.samenews=[]
+        self.everykeyword=[]
+        self.all_words=[]
+        self.similarity=[]
+        self.timekeyword=[]
+        self.all_news=[]
+        self.all_time=[]
+        self.all_content=[]
+        self.tfidfdata=[]
+        self.timetfidfdata=[]
+        self.nowwords=[]
 
 # 求两个向量的点积
 def dianji(vec1, vec2):
@@ -469,7 +471,15 @@ def tryHdfsPath(location):
 
 if __name__ == "__main__":
     cluster = Cluster('hdfs://mark-pc:9000/json/news.json')  # 文件名注意修改
-    cluster.ssc.start()
-    print("111111111111111\n111111111111\n11111111111")
-    cluster.ssc.awaitTermination()
-    cluster.fake_main()
+    while(True):
+        cluster.nowtime=time.time()
+        cluster.read()
+        cluster.tfidf()
+        cluster.timetfidf(cluster.len - 250, cluster.len - 1)
+        cluster.geteverykeyword()
+        cluster.gettimekeyword()
+        cluster.getsame()
+        cluster.get_attention()
+        cluster.saveall()
+        cluster.clean()
+        time.sleep(101)

@@ -29,25 +29,28 @@ def get_count(filename):
 
 
 if __name__ == "__main__":
-    # 小时，词，关键词
-    item_list = []
-    # cur_time = time.strftime("%Y-%m-%d %H:%M", time.localtime())
-    for dirs in os.listdir("./wct"):
-        # dir是时间戳 todo 修改
-        cur_time = '-'.join(dirs.split('-')[:-1])
-        data = get_count("./wct/"+dirs+"/part-00000")
-        if data is None:
+    while(True):
+        # 小时，词，关键词
+        print("start wct handle")
+        item_list = []
+        # cur_time = time.strftime("%Y-%m-%d %H:%M", time.localtime())
+        for dirs in os.listdir("./wct"):
+            # dir是时间戳 todo 修改
+            cur_time = '-'.join(dirs.split('-')[:-1])
+            data = get_count("./wct/"+dirs+"/part-00000")
+            if data is None:
+                shutil.rmtree("./wct/"+dirs)
+                continue
+            cur_json = {cur_time: data}
+            print(cur_json)
+            fp = open("./wordcount_history.json")
+            model = json.load(fp)
+            fp.close()
+            for i in cur_json:
+                model[i] = cur_json[i]
+            jsObj = json.dumps(model, ensure_ascii=False)
+            with open("./wordcount_history.json", "w", encoding='utf-8') as fw:
+                fw.write(jsObj)
+                fw.close()
             shutil.rmtree("./wct/"+dirs)
-            continue
-        cur_json = {cur_time: data}
-        print(cur_json)
-        fp = open("./wordcount_history.json")
-        model = json.load(fp)
-        fp.close()
-        for i in cur_json:
-            model[i] = cur_json[i]
-        jsObj = json.dumps(model, ensure_ascii=False)
-        with open("./wordcount_history.json", "w", encoding='utf-8') as fw:
-            fw.write(jsObj)
-            fw.close()
-        shutil.rmtree("./wct/"+dirs)
+        time.sleep(11)

@@ -35,7 +35,8 @@ class Cluster:
 
         self.nowtime = time.time()
 
-        word_count = self.out_stream.map(lambda x: (x, 1)).reduceByKey(lambda x, y: x+y).saveAsTextFiles("count")
+        word_count = self.out_stream.flatMap(lambda line: line.split(' ')).map(
+            lambda x: (x, 1)).reduceByKey(lambda x, y: x+y).repartition(1).saveAsTextFile("./wordcount.txt")
 
         # 存放所有新闻的所有属性
         self.all_news = []

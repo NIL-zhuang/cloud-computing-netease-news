@@ -14,8 +14,7 @@ class NewsSpider(CrawlSpider):
     allowed_domains = ['163.com']
     # 起始url地址，从这个地方开始抓取数据
     start_urls = ['https://www.163.com']
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36', }
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36', }
     # 匹配网易新闻的所有频道但是孤立订阅号
     # 这个正则表达式用来匹配网易新闻的url，不包括订阅号
     rules = (Rule(LinkExtractor(allow=r"https://[\w|.]{2,10}.163.com/\d{2}/\d{4}/\d{2}/[\w]{16}.html.*"),
@@ -35,6 +34,7 @@ class NewsSpider(CrawlSpider):
         item['url'] = str(response.url.encode()).split('?')[0].replace("b", '').replace("'", '')
         item['depth'] = response.meta['depth']
         self.get_title(item, response)
+        print(item['title'])
         self.get_section(item)
         self.get_time(item, response)
         self.get_source(item, response)
@@ -43,7 +43,6 @@ class NewsSpider(CrawlSpider):
         if item['url'] not in self.url_set:
             self.write_to_json(item)
             self.url_set.add(item['url'])
-            print(item['title'])
         return item
 
     def get_title(self, item: NeteaseNewsItem, response):
@@ -85,23 +84,23 @@ class NewsSpider(CrawlSpider):
         if text:
             item['content'] = change_text(text)
 
-    def get_province(self, item: NeteaseNewsItem, response):
+    def get_province(self, item: NeteaseNewsItem,  response):
         if ".news" not in item['url']:
             item['province'] = 'nation'
         else:
             item['province'] = item['url'].strip("https://").split('.')[0]
 
     def write_to_txt(self, item: NeteaseNewsItem):
-        timestamp = time.strftime("%Y%m%d%H", time.localtime())
-        with open(timestamp + '.txt', 'ab') as f:
-            string = ' '.join([tmpstr for tmpstr in item['content'] if len(tmpstr) > 0])
-            seg = jieba.lcut(string, cut_all=False)
+        timestamp = time.strftime("%Y%m%d%H%M", time.localtime())
+        with open(timestamp+'.txt', 'ab') as f:
+            str = ' '.join([tmpstr for tmpstr in item['content'] if len(tmpstr) > 0])
+            seg = jieba.lcut(str, cut_all=False)
             # print(seg)
             outwords = self.stop_to_str(seg)
             f.write((' '.join(outwords)).encode())
 
     def write_to_json(self, item: NeteaseNewsItem):
-        with open('news.json', 'a') as f:  # 将新闻写进同一个json
+        with open('news.json', 'a') as f:   # 将新闻写进同一个json
             json.dump(ItemAdapter(item).asdict(), f, ensure_ascii=False)
 
     def stop_to_str(self, seg):

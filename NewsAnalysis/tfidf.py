@@ -17,6 +17,7 @@ from pyspark import SparkContext
 # 检查HDFS中的文件是否存在
 import subprocess
 
+
 class Cluster:
     # 初始化
     def __init__(self, file_name):
@@ -26,11 +27,15 @@ class Cluster:
 
         self.sc = self.spark.sparkContext
 
-        self.ssc = StreamingContext(self.sc, 10)
+        self.ssc = StreamingContext(self.sc, 20)
+
+        self.out_stream = self.ssc.textFileStream("hdfs://mark-pc:9000/data")
 
         self.len = 0
 
         self.nowtime = time.time()
+
+        word_count = self.out_stream.map(lambda x: (x, 1)).reduceByKey(lambda x, y: x+y).saveAsTextFiles("count")
 
         # 存放所有新闻的所有属性
         self.all_news = []
@@ -65,13 +70,14 @@ class Cluster:
         # 存放每篇文章对应其他文章的相似度
         self.similarity = []
 
-        self.samenews=[]
+        self.samenews = []
 
         # 监听文件夹名
         self.file_name = file_name
 
         # 停用词表
-        self.stopwords = [line.strip() for line in open('stop_words.txt', encoding='UTF-8').readlines()]
+        self.stopwords = [line.strip() for line in open(
+            '/home/nil/Documents/code/cloud-computing-netease-news/NewsAnalysis/stop_words.txt', encoding='UTF-8').readlines()]
 
     # 去除停用词
     def stopandtostr(self, seg):
@@ -112,7 +118,7 @@ class Cluster:
                     self.all_words.append(outwords)
                     self.all_time.append(int(
                         (self.nowtime - time.mktime(time.strptime(data['time'], "%Y-%m-%d %H:%M:%S"))) / (
-                                24 * 60 * 60)))
+                            24 * 60 * 60)))
                     i += 1
 
         self.len = len(self.all_news)
@@ -309,7 +315,7 @@ class Cluster:
 
             index = top(tmpsame, 10)
 
-            outnews=[]
+            outnews = []
 
             for idex in index:
                 outnews.append(self.all_news[idex]['title'])
@@ -319,22 +325,23 @@ class Cluster:
     # 存储json文件
     def saveall(self):
 
-        outlist1=[]
+        outlist1 = []
         for i in range(self.len):
-            outlist1.append({'title':self.all_news[i]['title'],'attention':self.attention[i],'keyword':self.everykeyword[i],'samenews':self.samenews[i]})
+            outlist1.append({'title': self.all_news[i]['title'], 'attention': self.attention[i],
+                             'keyword': self.everykeyword[i], 'samenews': self.samenews[i]})
 
-        with open('../OutDir/out.json', 'w',encoding='utf-8') as f:
-            json.dump(outlist1, f,ensure_ascii=False)
+        with open('../OutDir/out.json', 'w', encoding='utf-8') as f:
+            json.dump(outlist1, f, ensure_ascii=False)
 
-        with open('../OutDir/outtime.json', 'w',encoding='utf-8') as f:
-            json.dump({'timekeyword':self.timekeyword}, f,ensure_ascii=False)
-
+        with open('../OutDir/outtime.json', 'w', encoding='utf-8') as f:
+            json.dump({'timekeyword': self.timekeyword}, f, ensure_ascii=False)
 
     # 利用hacker news热度算法进行计算，其中投票在这里改写为相似度超过30%的新闻数
     # 详情参见https://blog.csdn.net/ouzhuangzhuang/article/details/82467949?utm_medium=distribute.pc_relevant_t0.none-task-blog-searchFromBaidu-1.control&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-searchFromBaidu-1.control
+
     def get_attention(self):
 
-        self.attention=[]
+        self.attention = []
 
         g = 9.8
 
@@ -372,6 +379,17 @@ class Cluster:
 
         self.timekeyword = out20
 
+    def fake_main(self):
+        # os.environ['PYSPARK_PYTHON'] = '../venv/bin/python3.8'  # 在实际使用时，请注释掉
+
+        self.read()
+        self.tfidf()
+        self.timetfidf(cluster.len-250, cluster.len-1)
+        self.geteverykeyword()
+        self.gettimekeyword()
+        self.getsame()
+        self.get_attention()
+        self.saveall()
 
 
 # 求两个向量的点积
@@ -404,11 +422,12 @@ def top(onearray, n):
         large.append(onearray.index(newone[i]))
     return large
 
+
 def wordCount():
     inputFile = 'hdfs://master:9000/temp/hdin/*'  # 文档地址
     outputFile = 'hdfs://master:9000/temp/spark-out'  # 结果目录
     txtNum = 0
-    inputFile = inputFile + str(txtNum)  #这里视为文档规律命名，实际情况中需要调整
+    inputFile = inputFile + str(txtNum)  # 这里视为文档规律命名，实际情况中需要调整
     txtNum += 1
 
     sc = SparkContext('local', 'wordcount')
@@ -417,14 +436,16 @@ def wordCount():
     counts = text_file.flatMap(lambda line: line.split(' ')).map(lambda word: (word, 1)).reduceByKey(lambda a, b: a + b)
     counts.saveAsTextFile(outputFile)
 
+
 def listening_wordCount():
     sc = SparkContext(appName="")
-    ssc = StreamingContext(sc,90)
+    ssc = StreamingContext(sc, 90)
     text_file = ssc.textFileStream("")   # 文本文件目录
     outputFile = ''  # 结果存储目录
 
     counts = text_file.flatMap(lambda line: line.split(' ')).map(lambda word: (word, 1)).reduceByKey(lambda a, b: a + b)
     counts.saveAsTextFile(outputFile)
+
 
 '''
 def tryHdfsPath(location):
@@ -446,14 +467,7 @@ def tryHdfsPath(location):
 
 
 if __name__ == "__main__":
-    os.environ['PYSPARK_PYTHON'] = '../venv/bin/python3.8'  # 在实际使用时，请注释掉
-
-    cluster = Cluster('../Data/news.json')#文件名注意修改
-    cluster.read()
-    cluster.tfidf()
-    cluster.timetfidf(cluster.len-250,cluster.len-1)
-    cluster.geteverykeyword()
-    cluster.gettimekeyword()
-    cluster.getsame()
-    cluster.get_attention()
-    cluster.saveall()
+    cluster = Cluster('../Data/news.json')  # 文件名注意修改
+    cluster.ssc.start()
+    cluster.ssc.awaitTermination()
+    cluster.fake_main()

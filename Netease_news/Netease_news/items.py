@@ -14,4 +14,3 @@ class NeteaseNewsItem(scrapy.Item):
     source = scrapy.Field()     # 新闻源
     content = scrapy.Field()    # 内容
     depth = scrapy.Field()      # 在www主站内的深度，也就是权重
-    # province = scrapy.Field()   # 新闻省份，默认为#，js表示江苏，zj表示浙江

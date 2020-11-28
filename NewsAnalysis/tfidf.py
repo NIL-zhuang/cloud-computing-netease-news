@@ -23,7 +23,7 @@ class Cluster:
     def __init__(self, file_name):
 
         # spark streaming初始化
-        self.spark = SparkSession.builder.appName("NewsAnalysis").master("local[*]").getOrCreate()
+        self.spark = SparkSession.builder.appName("NewsAnalysis").getOrCreate()
 
         self.sc = self.spark.sparkContext
 
@@ -36,7 +36,7 @@ class Cluster:
         self.nowtime = time.time()
 
         word_count = self.out_stream.flatMap(lambda line: line.split(' ')).map(
-            lambda x: (x, 1)).reduceByKey(lambda x, y: x+y).repartition(1).saveAsTextFile("./wordcount.txt")
+            lambda x: (x, 1)).reduceByKey(lambda x, y: x+y).repartition(1).saveAsTextFiles("./word")
 
         # 存放所有新闻的所有属性
         self.all_news = []

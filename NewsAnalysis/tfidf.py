@@ -23,7 +23,7 @@ class Cluster:
     def __init__(self, file_name):
 
         # spark streaming初始化
-        self.spark = SparkSession.builder.appName("NewsAnalysis").getOrCreate()
+        self.spark = SparkSession.builder.appName("NewsAnalysis").master("local[*]").getOrCreate()
 
         self.sc = self.spark.sparkContext
 
@@ -37,6 +37,8 @@ class Cluster:
 
         word_count = self.out_stream.flatMap(lambda line: line.split(' ')).map(
             lambda x: (x, 1)).reduceByKey(lambda x, y: x+y).repartition(1).saveAsTextFiles("./word")
+
+        self.fake_main()
 
         # 存放所有新闻的所有属性
         self.all_news = []
@@ -382,15 +384,15 @@ class Cluster:
 
     def fake_main(self):
         # os.environ['PYSPARK_PYTHON'] = '../venv/bin/python3.8'  # 在实际使用时，请注释掉
-
-        self.read()
-        self.tfidf()
-        self.timetfidf(cluster.len-250, cluster.len-1)
-        self.geteverykeyword()
-        self.gettimekeyword()
-        self.getsame()
-        self.get_attention()
-        self.saveall()
+        print("=======================?????====================")
+        # self.read()
+        # self.tfidf()
+        # self.timetfidf(cluster.len-250, cluster.len-1)
+        # self.geteverykeyword()
+        # self.gettimekeyword()
+        # self.getsame()
+        # self.get_attention()
+        # self.saveall()
 
 
 # 求两个向量的点积
@@ -468,6 +470,7 @@ def tryHdfsPath(location):
 
 
 if __name__ == "__main__":
+    # os.environ['PYSPARK_PYTHON'] = '/usr/bin/python3.8'   # 在实际使用时，请注释掉
     cluster = Cluster('hdfs://mark-pc:9000/json/news.json')  # 文件名注意修改
     cluster.ssc.start()
     print("111111111111111\n111111111111\n11111111111")

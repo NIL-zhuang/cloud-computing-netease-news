@@ -285,7 +285,7 @@ class Cluster:
             json.dump(outlist1, f, ensure_ascii=False)
 
         with open('/home/mark/isework/cloud-computing-netease-news/out/outtime.json', 'w', encoding='utf-8') as f:
-            json.dump({'timekeyword': self.timekeyword}, f, ensure_ascii=False)
+            json.dump({'time':time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),'timekeyword': self.timekeyword}, f, ensure_ascii=False)
 
     # 利用hacker news热度算法进行计算，其中投票在这里改写为相似度超过30%的新闻数
     # 详情参见https://blog.csdn.net/ouzhuangzhuang/article/details/82467949?utm_medium=distribute.pc_relevant_t0.none-task-blog-searchFromBaidu-1.control&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-searchFromBaidu-1.control

@@ -331,10 +331,10 @@ class Cluster:
             outlist1.append({'title': self.all_news[i]['title'], 'attention': self.attention[i],
                              'keyword': self.everykeyword[i], 'samenews': self.samenews[i]})
 
-        with open('../OutDir/out.json', 'w', encoding='utf-8') as f:
+        with open('hdfs://mark-pc:9000/out/out.json', 'w', encoding='utf-8') as f:
             json.dump(outlist1, f, ensure_ascii=False)
 
-        with open('../OutDir/outtime.json', 'w', encoding='utf-8') as f:
+        with open('hdfs://mark-pc:9000/out/outtime.json', 'w', encoding='utf-8') as f:
             json.dump({'timekeyword': self.timekeyword}, f, ensure_ascii=False)
 
     # 利用hacker news热度算法进行计算，其中投票在这里改写为相似度超过30%的新闻数
@@ -468,7 +468,8 @@ def tryHdfsPath(location):
 
 
 if __name__ == "__main__":
-    cluster = Cluster('../Data/news.json')  # 文件名注意修改
+    cluster = Cluster('hdfs://mark-pc:9000/json/news.json')  # 文件名注意修改
     cluster.ssc.start()
+    print("111111111111111\n111111111111\n11111111111")
     cluster.ssc.awaitTermination()
     cluster.fake_main()

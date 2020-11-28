@@ -77,7 +77,7 @@ class Cluster:
 
         # 停用词表
         self.stopwords = [line.strip() for line in open(
-            '/home/nil/Documents/code/cloud-computing-netease-news/NewsAnalysis/stop_words.txt', encoding='UTF-8').readlines()]
+            '/home/mark/isework/cloud-computing-netease-news/NewsAnalysis/stop_words.txt', encoding='UTF-8').readlines()]
 
     # 去除停用词
     def stopandtostr(self, seg):

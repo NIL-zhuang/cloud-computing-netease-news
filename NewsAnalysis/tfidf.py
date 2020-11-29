@@ -296,21 +296,15 @@ class Cluster:
     def get_attention(self):
 
         self.attention = []
-
         g = 9.8
-
         for i in range(self.len):
-
             points = 0
             for j in self.similarity[i]:
                 if j >= 0.3:
                     points += 1
-
-            self.attention.append((points - 1) / ((self.all_time[i] + 2) * g))
-
+            self.attention.append((points - 1) / ((self.all_time[i] + 2) * g)*(10-int(self.all_news[i]['depth']))**2)
         maxi = max(self.attention)
         mini = min(self.attention)
-
         for i in range(self.len):
             self.attention[i] = (self.attention[i] - mini) / (maxi - mini) * 100
 

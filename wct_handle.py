@@ -31,10 +31,10 @@ def get_count(filename):
 if __name__ == "__main__":
     # 小时，词，关键词
     item_list = []
-    # cur_time = time.strftime("%Y-%m-%d %H:%M", time.localtime())
+    cur_time = time.strftime("%Y-%m-%d %H:%M", time.localtime())
     for dirs in os.listdir("./wct"):
         # dir是时间戳 todo 修改
-        cur_time = '-'.join(dirs.split('-')[:-1])
+        # cur_time = '-'.join(dirs.split('-')[:-1])
         data = get_count("./wct/"+dirs+"/part-00000")
         if data is None:
             shutil.rmtree("./wct/"+dirs)

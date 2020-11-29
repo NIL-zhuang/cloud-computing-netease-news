@@ -93,7 +93,7 @@ class NewsSpider(CrawlSpider):
     def write_to_txt(self, item: NeteaseNewsItem):
         timestamp = time.strftime("%Y%m%d%H%M", time.localtime())
         with open(timestamp+'.txt', 'ab') as f:
-            str = ' '.join([tmpstr for tmpstr in item['content'] if len(tmpstr) > 0])
+            str = ' '.join([tmpstr for tmpstr in item['content']])
             seg = jieba.lcut(str, cut_all=False)
             # print(seg)
             outwords = self.stop_to_str(seg)
@@ -106,7 +106,7 @@ class NewsSpider(CrawlSpider):
     def stop_to_str(self, seg):
         outlist = []
         for word in seg:
-            if word not in self.stopwords:
+            if word not in self.stopwords and len(word) > 0:
                 outlist.append(word)
         # out是分割单词后的语句，outlist是所有分割单词
         return outlist

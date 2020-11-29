@@ -23,7 +23,7 @@ class Cluster:
     def __init__(self, file_name):
 
         # spark streaming初始化
-        self.spark = SparkSession.builder.appName("NewsAnalysis").master("local[*]").getOrCreate()
+        self.spark = SparkSession.builder.appName("NewsAnalysis").getOrCreate()
 
         # self.sc = self.spark.sparkContext
 

@@ -75,6 +75,8 @@ https://github.com/NIL-zhuang/cloud-computing-netease-news
    pyspark  
    numpy  
    scrapy  
+3. 在代码中和hadoop,spark有关的路径如hdfs dfs -get -f hdfs://mark-pc:9000/json/news.json  
+以及部分本地路径如/home/mark/isework/cloud-computing-netease-news/data/news.json等需要根据自己电脑的配置情况进行修改
 ### 爬虫
 运行main.py文件进行网易新闻的爬取
 ### 流监听与流处理

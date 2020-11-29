@@ -29,7 +29,7 @@ def get_count(filename):
 
 
 if __name__ == "__main__":
-    while(True):
+    while True:
         # 小时，词，关键词
         print("start wct handle")
         item_list = []

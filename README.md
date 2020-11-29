@@ -2,6 +2,16 @@
 
 2020NJUSE云计算作业，使用spark-streaming分析网易新闻的数据
 
+## 网易新闻第18组成员情况
+- 庄子元 181830266
+- 梅凯 181840164
+- 乔涤生 181850128
+- 陈鹏克 181840023
+- 韩禧 181250041
+
+## 项目仓库地址
+https://github.com/NIL-zhuang/cloud-computing-netease-news
+
 ## 项目结构
 ├── crawl.sh  
 ├── data  
@@ -12,8 +22,8 @@
 │         │         ├── attention.html  
 │         │         └── Demo.png  
 │         ├── news  
-│         │         ├── news.html  
-│         │         └── news.json  
+│         │         ├── source.html  
+│         │         └── time.html  
 │         └── wordcount  
 │             └── wordcount.html  
 ├── main.py  
@@ -53,6 +63,7 @@
 ├── wct_handle.py  
 ├── wordcount_history.json  
 └── wordcount.sh  
+
 ## 复现步骤
 ### 环境准备
 1. 启动hadoop和spark集群环境

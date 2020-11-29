@@ -23,7 +23,7 @@ class Cluster:
     def __init__(self, file_name):
 
         # spark streaming初始化
-        self.spark = SparkSession.builder.appName("NewsAnalysis").master("local[*]").getOrCreate()
+        self.spark = SparkSession.builder.appName("NewsAnalysis").getOrCreate()
 
         # self.sc = self.spark.sparkContext
 
@@ -119,7 +119,7 @@ class Cluster:
                     self.all_words.append(outwords)
                     self.all_time.append(int(
                         (self.nowtime - time.mktime(time.strptime(data['time'], "%Y-%m-%d %H:%M:%S"))) / (
-                            24 * 60 * 60)))
+                             60)))
                     i += 1
 
         self.len = len(self.all_news)
@@ -215,18 +215,18 @@ class Cluster:
             tmpsame = []
 
             # 遍历所有新闻求相似度
-            for i in range(self.len):
+            for k in range(self.len):
 
                 # 第num篇新闻的关键词
                 combine_keyword = copy.copy(self.everykeyword[num])
 
                 # 如果是原文，相似度置为0
-                if i == num:
+                if k == num:
                     tmpsame.append(0)
                 else:
 
                     # 两篇文章的关键词合并
-                    for word in self.everykeyword[i]:
+                    for word in self.everykeyword[k]:
                         combine_keyword.append(word)
 
                     # 去除重复关键词
@@ -243,7 +243,7 @@ class Cluster:
                     for word in self.all_words[num]:
                         if word in combine_keyword:
                             vec1[combine_keyword.index(word)] += 1
-                    for word in self.all_words[i]:
+                    for word in self.all_words[k]:
                         if word in combine_keyword:
                             vec2[combine_keyword.index(word)] += 1
 
@@ -255,21 +255,23 @@ class Cluster:
                     # 将相似度放入相似度数组
                     tmpsame.append(up / down)
 
-            self.similarity.append(tmpsame)
+                self.similarity.append(tmpsame)
 
             index = top(tmpsame)
 
             outnews = []
 
-            count=0
+            count = 0
             for idex in index:
-                if (count >= 20):
+
+                tmp = tmpsame.index(idex)
+
+                if count >= 20:
                     break
                 else:
-                    if self.all_news[idex]['title'] not in outnews:
-                        outnews.append(self.all_news[idex]['title'])
+                    if self.all_news[tmp]['title'] not in outnews and self.similarity[num][tmp] >= 0.5:
+                        outnews.append(self.all_news[tmp]['title'])
                         count += 1
-
 
             self.samenews.append(outnews)
 
@@ -300,10 +302,10 @@ class Cluster:
 
             points = 0
             for j in self.similarity[i]:
-                if j >= 0.3:
+                if j >= 0.5:
                     points += 1
 
-            self.attention.append((points - 1) / (self.all_time[i] + 2))
+            self.attention.append((points - 1) / ((self.all_time[i] + 2)*g))
 
         maxi = max(self.attention)
         mini = min(self.attention)
@@ -318,11 +320,14 @@ class Cluster:
             out20 = []
             count=0
             for idex in index20:
+
+                tmp=self.tfidfdata[i].tolist().index(idex)
+
                 if(count>=20):
                     break
                 else:
-                    if self.all_words[i][idex] not in out20:
-                        out20.append(self.all_words[i][idex])
+                    if self.all_words[i][tmp] not in out20:
+                        out20.append(self.all_words[i][tmp])
                         count+=1
             self.everykeyword.append(out20)
 
@@ -333,11 +338,14 @@ class Cluster:
 
         count=0
         for idex in index20:
-            if (count >= 20):
+
+            tmp = self.timetfidfdata[len(self.timetfidfdata) - 1].tolist().index(idex)
+
+            if count >= 20:
                 break
             else:
-                if self.nowwords[idex] not in out20:
-                    out20.append(self.nowwords[idex])
+                if self.nowwords[tmp] not in out20:
+                    out20.append(self.nowwords[tmp])
                     count += 1
 
 
@@ -383,10 +391,7 @@ def top(onearray):
     newone.sort()
     newone.reverse()
 
-    large = []
-    for i in range(len(onearray)):
-        large.append(onearray.index(newone[i]))
-    return large
+    return newone
 
 
 def wordCount():
@@ -440,7 +445,7 @@ if __name__ == "__main__":
         cluster.nowtime = time.time()
         cluster.read()
         cluster.tfidf()
-        cluster.timetfidf(cluster.len - 250, cluster.len - 1)
+        cluster.timetfidf(cluster.len - 100, cluster.len - 1)
         cluster.geteverykeyword()
         cluster.gettimekeyword()
         cluster.getsame()

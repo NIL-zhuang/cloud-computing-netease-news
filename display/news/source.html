@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新闻来源统计表</title>
+</head>
+
+<body>
+    <div id="container"></div>
+    <script src="https://gw.alipayobjects.com/os/lib/antv/g2/4.0.15/dist/g2.min.js"></script>
+    <script>
+        window.onload = function () {
+            let url = "../../data/news.json";
+            let request = new XMLHttpRequest();
+            request.open("get", url);
+            request.send(null);
+            request.onload = function () {
+                if (request.status === 200) {
+                    fakeJsonStr = request.responseText;
+                    let strArray = fakeJsonStr.split('}{');
+                    let realJsonStr = "[" + strArray[0];
+                    for (let i = 1; i < strArray.length; i++) {
+                        realJsonStr = realJsonStr + "}, {" + strArray[i];
+                    }
+                    realJsonStr += "]";
+                    let jsonData = JSON.parse(realJsonStr);
+                    let sourceCount = {};
+                    for (let i = 0; i < jsonData.length; i++) {
+                        if (Object.keys(sourceCount).includes(jsonData[i].source)) {
+                            sourceCount[jsonData[i].source] += 1;
+                        } else {
+                            sourceCount[jsonData[i].source] = 1;
+                        }
+                    }
+                    let data = [];
+                    let keys = Object.keys(sourceCount);
+                    for (let i = 0; i < keys.length; i++) {
+                        data.push({ "type": keys[i], "value": sourceCount[keys[i]] });
+                    }
+                    console.log(data);
+                    data.sort((a, b) => {
+                        return a.value - b.value;
+                    })
+                    console.log(data);
+                    const chart = new G2.Chart({
+                        container: 'container',
+                        autoFit: true,
+                        height: 6000,
+                    });
+                    chart.data(data);
+                    chart.scale({
+                        value: {
+                            max: 400,
+                            min: 0,
+                            alias: '引用数量',
+                        },
+                    });
+                    chart.axis('type', {
+                        title: null,
+                        tickLine: null,
+                        line: null,
+                    });
+
+                    chart.axis('value', {
+                        label: null,
+                        title: {
+                            offset: 20,
+                            style: {
+                                fontSize: 12,
+                                fontWeight: 300,
+                            },
+                        },
+                    });
+                    chart.legend(false);
+                    chart.coordinate().transpose();
+                    chart
+                        .interval()
+                        .position('type*value')
+                        .size(26)
+                        .label('value', {
+                            style: {
+                                fill: '#8d8d8d',
+                            },
+                            offset: 10,
+                        });
+                    chart.interaction('element-active');
+                    chart.render();
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -33,10 +33,11 @@ if __name__ == "__main__":
         # 小时，词，关键词
         print("start wct handle")
         item_list = []
-        # cur_time = time.strftime("%Y-%m-%d %H:%M", time.localtime())
+        cur_time = time.strftime("%Y-%m-%d %H:%M", time.localtime())
         for dirs in os.listdir("./wct"):
             # dir是时间戳 todo 修改
-            cur_time = '-'.join(dirs.split('-')[:-1])
+            print(dirs)
+            # cur_time = '-'.join(dirs.split('-')[:-1])
             data = get_count("./wct/"+dirs+"/part-00000")
             if data is None:
                 shutil.rmtree("./wct/"+dirs)
@@ -53,4 +54,4 @@ if __name__ == "__main__":
                 fw.write(jsObj)
                 fw.close()
             shutil.rmtree("./wct/"+dirs)
-        time.sleep(11)
+        time.sleep(100)

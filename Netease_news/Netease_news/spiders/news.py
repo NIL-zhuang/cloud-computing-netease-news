@@ -25,7 +25,7 @@ class NewsSpider(CrawlSpider):
     with open("news.json") as f:
         string = f.read()
     url_set = set(re.findall(pattern, string))
-    print("current news:"+str(len(url_set)))
+    print("current news:" + str(len(url_set)))
     stopwords = [line.strip() for line in open('./Netease_news/stop_words.txt', encoding='UTF-8').readlines()]
 
     def parse_item(self, response):

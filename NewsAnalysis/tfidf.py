@@ -23,7 +23,7 @@ class Cluster:
     def __init__(self, file_name):
 
         # spark streaming初始化
-        self.spark = SparkSession.builder.appName("NewsAnalysis").getOrCreate()
+        self.spark = SparkSession.builder.appName("NewsAnalysis").master("local[*]").getOrCreate()
 
         # self.sc = self.spark.sparkContext
 
@@ -204,63 +204,6 @@ class Cluster:
         # 取得时间段内关键词
         self.gettimekeyword()
 
-    # 第num篇文章的相似文本聚类
-    def getonesame(self, num):
-
-        # tmpsame数组相似度
-        tmpsame = []
-
-        # 遍历所有新闻求相似度
-        for i in range(self.len):
-
-            # 第num篇新闻的关键词
-            combine_keyword = copy.copy(self.everykeyword[num])
-
-            # 如果是原文，相似度置为0
-            if i == num:
-                tmpsame.append(0)
-            else:
-
-                # 两篇文章的关键词合并
-                for word in self.everykeyword[i]:
-                    combine_keyword.append(word)
-
-                # 去除重复关键词
-                combine_keyword = list(set(combine_keyword))
-
-                # 放入0
-                vec1 = []
-                vec2 = []
-                for j in range(len(combine_keyword)):
-                    vec1.append(0)
-                    vec2.append(0)
-
-                # 遍历新闻看关键词个数
-                for word in self.all_words[num]:
-                    if word in combine_keyword:
-                        vec1[combine_keyword.index(word)] += 1
-                for word in self.all_words[i]:
-                    if word in combine_keyword:
-                        vec2[combine_keyword.index(word)] += 1
-
-                # 求点积，为分子
-                up = dianji(vec1, vec2)
-                # 求分母，为分母
-                down = fanshu(vec1) * fanshu(vec2)
-
-                # 将相似度放入相似度数组
-                tmpsame.append(up / down)
-
-        # 打印第num篇文章标题
-        print(self.all_news[num]['title'])
-        index = top(tmpsame, 10)
-
-        print("-----------------------------------")
-
-        # 打印相似度最高10个的新闻标题
-        for idex in index:
-            print(self.all_news[idex]['title'])
-
     # 所有文章的相似文本聚类
     def getsame(self):
 
@@ -314,12 +257,19 @@ class Cluster:
 
             self.similarity.append(tmpsame)
 
-            index = top(tmpsame, 10)
+            index = top(tmpsame)
 
             outnews = []
 
+            count=0
             for idex in index:
-                outnews.append(self.all_news[idex]['title'])
+                if (count >= 20):
+                    break
+                else:
+                    if self.all_news[idex]['title'] not in outnews:
+                        outnews.append(self.all_news[idex]['title'])
+                        count += 1
+
 
             self.samenews.append(outnews)
 
@@ -331,10 +281,10 @@ class Cluster:
             outlist1.append({'title': self.all_news[i]['title'], 'attention': self.attention[i],
                              'keyword': self.everykeyword[i], 'samenews': self.samenews[i]})
 
-        with open('hdfs://mark-pc:9000/out/out.json', 'w', encoding='utf-8') as f:
+        with open('/home/mark/isework/cloud-computing-netease-news/out/out.json', 'w', encoding='utf-8') as f:
             json.dump(outlist1, f, ensure_ascii=False)
 
-        with open('hdfs://mark-pc:9000/out/outtime.json', 'w', encoding='utf-8') as f:
+        with open('/home/mark/isework/cloud-computing-netease-news/out/outtime.json', 'w', encoding='utf-8') as f:
             json.dump({'timekeyword': self.timekeyword}, f, ensure_ascii=False)
 
     # 利用hacker news热度算法进行计算，其中投票在这里改写为相似度超过30%的新闻数
@@ -364,19 +314,32 @@ class Cluster:
     # 取得前20个关键词，按照tfidf值
     def geteverykeyword(self):
         for i in range(self.len):
-            index20 = top(self.tfidfdata[i], 20)
+            index20 = top(self.tfidfdata[i])
             out20 = []
+            count=0
             for idex in index20:
-                out20.append(self.all_words[i][idex])
+                if(count>=20):
+                    break
+                else:
+                    if self.all_words[i][idex] not in out20:
+                        out20.append(self.all_words[i][idex])
+                        count+=1
             self.everykeyword.append(out20)
 
     # 取得前20个时间段内关键词，按照tfidf值
     def gettimekeyword(self):
-        index20 = top(self.timetfidfdata[len(self.timetfidfdata) - 1], 20)
+        index20 = top(self.timetfidfdata[len(self.timetfidfdata) - 1])
         out20 = []
 
+        count=0
         for idex in index20:
-            out20.append(self.nowwords[idex])
+            if (count >= 20):
+                break
+            else:
+                if self.nowwords[idex] not in out20:
+                    out20.append(self.nowwords[idex])
+                    count += 1
+
 
         self.timekeyword = out20
 
@@ -412,7 +375,7 @@ def fanshu(vec):
 
 
 # 求列表的前n个最大值的坐标数组
-def top(onearray, n):
+def top(onearray):
     if not isinstance(onearray, list):
         onearray = onearray.tolist()
 
@@ -421,7 +384,7 @@ def top(onearray, n):
     newone.reverse()
 
     large = []
-    for i in range(min(len(onearray), n)):
+    for i in range(len(onearray)):
         large.append(onearray.index(newone[i]))
     return large
 
@@ -470,9 +433,11 @@ def tryHdfsPath(location):
 
 
 if __name__ == "__main__":
-    cluster = Cluster('hdfs://mark-pc:9000/json/news.json')  # 文件名注意修改
+    cluster = Cluster('/home/mark/isework/cloud-computing-netease-news/data/news.json')  # 文件名注意修改
     while(True):
-        cluster.nowtime=time.time()
+        os.system("hdfs dfs -get -f hdfs://mark-pc:9000/json/news.json /home/mark/isework/cloud-computing-netease-news/data/news.json")
+        # if os.path.exists("../data/news.json"):
+        cluster.nowtime = time.time()
         cluster.read()
         cluster.tfidf()
         cluster.timetfidf(cluster.len - 250, cluster.len - 1)
@@ -482,4 +447,6 @@ if __name__ == "__main__":
         cluster.get_attention()
         cluster.saveall()
         cluster.clean()
-        time.sleep(101)
+        os.system("hdfs dfs -put -f /home/mark/isework/cloud-computing-netease-news/out/out.json hdfs://mark-pc:9000/out/out.json ")
+        os.system("hdfs dfs -put -f /home/mark/isework/cloud-computing-netease-news/out/outtime.json hdfs://mark-pc:9000/out/outtime.json ")
+        time.sleep(1801)

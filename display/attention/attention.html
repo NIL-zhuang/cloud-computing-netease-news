@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>attention表</title>
+    <style>
+        table {
+            margin: 8%;
+            border-collapse: collapse;
+            border-color: #d8d8d8;
+        }
+        thead {
+            font-size: 28px;
+        }
+        thead tr {
+            height: 80px;
+        }
+        #body {
+            font-family: "STKaiti", "KaiTi", sans-serif;
+            font-size: 20px;
+        }
+        #body tr {
+            height: 80px;
+        }
+        th {
+            padding: 20px;
+        }
+        .title p:hover {
+            cursor: pointer;
+        }
+        .title p:hover + .box {
+            display: block;
+        }
+        .box:hover {
+            display: block;
+        }
+        .box {
+            display: none;
+            position: absolute;
+            margin-top: 2px;
+            width: 30%;
+            border: solid 1px;
+            border-color: #d8d8d8;
+            border-radius: 5px;
+            background-color: white;
+            box-shadow: 1px 1px 3px#9c9c9c ;
+        }
+        .relative-news {
+            font-size: 12px;
+            line-height: 1.0em;
+        }
+
+    </style>
+</head>
+<body>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>标题</th>
+                <th>热度</th>
+                <th>热词</th>
+            </tr>
+        </thead>
+        <tbody id="body">
+        </tbody>
+    </table>
+    <script>
+        window.onload = function() {
+            let url = "../../out/out.json";
+            let request = new XMLHttpRequest();
+            request.open("get", url);
+            request.send(null);
+            request.onload = function() {
+                if (request.status === 200) {
+                    data = JSON.parse(request.responseText);
+                    console.log(data);
+                    data.sort((b, a) => a.attention - b.attention);
+                    tbody = document.getElementById('body');
+                    for (let i = 0; i < data.length; i++) {
+                        const element = data[i];
+                        tbody.innerHTML += '<tr><th class="title">' + '<p>' + element.title + '<div class="box" id="' + i + '"></div>' + '</p>' + '</th><th>' + element.attention + '</th><th>' + element.keyword + '</th></tr>';
+                        const box = document.getElementById(i);
+                        console.log(box);
+                        box.innerHTML += '<p>相关新闻</p>'
+                        for (let j = 0; j < element.samenews.length; j++) {
+                            box.innerHTML += '<p class="relative-news">' + element.samenews[j] + '</p>';
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>

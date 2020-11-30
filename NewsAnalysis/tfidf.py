@@ -36,7 +36,7 @@ class Cluster:
         self.nowtime = time.time()
 
         # word_count = self.out_stream.flatMap(lambda line: line.split(' ')).map(
-            # lambda x: (x, 1)).reduceByKey(lambda x, y: x+y).repartition(1).saveAsTextFiles("./word")
+        # lambda x: (x, 1)).reduceByKey(lambda x, y: x+y).repartition(1).saveAsTextFiles("./word")
 
         # 存放所有新闻的所有属性
         self.all_news = []
@@ -78,7 +78,8 @@ class Cluster:
 
         # 停用词表
         self.stopwords = [line.strip() for line in open(
-            '/home/mark/isework/cloud-computing-netease-news/NewsAnalysis/stop_words.txt', encoding='UTF-8').readlines()]
+            '/home/mark/isework/cloud-computing-netease-news/NewsAnalysis/stop_words.txt',
+            encoding='UTF-8').readlines()]
 
     # 去除停用词
     def stopandtostr(self, seg):
@@ -119,7 +120,7 @@ class Cluster:
                     self.all_words.append(outwords)
                     self.all_time.append(int(
                         (self.nowtime - time.mktime(time.strptime(data['time'], "%Y-%m-%d %H:%M:%S"))) / (
-                             60)))
+                            60)))
                     i += 1
 
         self.len = len(self.all_news)
@@ -266,10 +267,10 @@ class Cluster:
 
                 tmp = tmpsame.index(idex)
 
-                if count >= 20:
+                if count >= 10:
                     break
                 else:
-                    if self.all_news[tmp]['title'] not in outnews and self.similarity[num][tmp] >= 0.5:
+                    if self.all_news[tmp]['title'] not in outnews:
                         outnews.append(self.all_news[tmp]['title'])
                         count += 1
 
@@ -295,21 +296,15 @@ class Cluster:
     def get_attention(self):
 
         self.attention = []
-
         g = 9.8
-
         for i in range(self.len):
-
             points = 0
             for j in self.similarity[i]:
-                if j >= 0.5:
+                if j >= 0.3:
                     points += 1
-
-            self.attention.append((points - 1) / ((self.all_time[i] + 2)*g))
-
+            self.attention.append((points - 1) / ((self.all_time[i] + 2) * g)*(10-int(self.all_news[i]['depth']))**2)
         maxi = max(self.attention)
         mini = min(self.attention)
-
         for i in range(self.len):
             self.attention[i] = (self.attention[i] - mini) / (maxi - mini) * 100
 
@@ -318,17 +313,17 @@ class Cluster:
         for i in range(self.len):
             index20 = top(self.tfidfdata[i])
             out20 = []
-            count=0
+            count = 0
             for idex in index20:
 
-                tmp=self.tfidfdata[i].tolist().index(idex)
+                tmp = self.tfidfdata[i].tolist().index(idex)
 
-                if(count>=20):
+                if count >= 20:
                     break
                 else:
                     if self.all_words[i][tmp] not in out20:
                         out20.append(self.all_words[i][tmp])
-                        count+=1
+                        count += 1
             self.everykeyword.append(out20)
 
     # 取得前20个时间段内关键词，按照tfidf值
@@ -336,7 +331,7 @@ class Cluster:
         index20 = top(self.timetfidfdata[len(self.timetfidfdata) - 1])
         out20 = []
 
-        count=0
+        count = 0
         for idex in index20:
 
             tmp = self.timetfidfdata[len(self.timetfidfdata) - 1].tolist().index(idex)
@@ -348,23 +343,22 @@ class Cluster:
                     out20.append(self.nowwords[tmp])
                     count += 1
 
-
         self.timekeyword = out20
 
-
     def clean(self):
-        self.attention=[]
-        self.samenews=[]
-        self.everykeyword=[]
-        self.all_words=[]
-        self.similarity=[]
-        self.timekeyword=[]
-        self.all_news=[]
-        self.all_time=[]
-        self.all_content=[]
-        self.tfidfdata=[]
-        self.timetfidfdata=[]
-        self.nowwords=[]
+        self.attention = []
+        self.samenews = []
+        self.everykeyword = []
+        self.all_words = []
+        self.similarity = []
+        self.timekeyword = []
+        self.all_news = []
+        self.all_time = []
+        self.all_content = []
+        self.tfidfdata = []
+        self.timetfidfdata = []
+        self.nowwords = []
+
 
 # 求两个向量的点积
 def dianji(vec1, vec2):
@@ -411,7 +405,7 @@ def wordCount():
 def listening_wordCount():
     sc = SparkContext(appName="")
     ssc = StreamingContext(sc, 90)
-    text_file = ssc.textFileStream("")   # 文本文件目录
+    text_file = ssc.textFileStream("")  # 文本文件目录
     outputFile = ''  # 结果存储目录
 
     counts = text_file.flatMap(lambda line: line.split(' ')).map(lambda word: (word, 1)).reduceByKey(lambda a, b: a + b)
@@ -436,11 +430,11 @@ def tryHdfsPath(location):
         print(location + " does not exist. Please check the URI")
 '''
 
-
 if __name__ == "__main__":
     cluster = Cluster('/home/mark/isework/cloud-computing-netease-news/data/news.json')  # 文件名注意修改
-    while(True):
-        os.system("hdfs dfs -get -f hdfs://mark-pc:9000/json/news.json /home/mark/isework/cloud-computing-netease-news/data/news.json")
+    while (True):
+        os.system(
+            "hdfs dfs -get -f hdfs://mark-pc:9000/json/news.json /home/mark/isework/cloud-computing-netease-news/data/news.json")
         # if os.path.exists("../data/news.json"):
         cluster.nowtime = time.time()
         cluster.read()
@@ -452,6 +446,8 @@ if __name__ == "__main__":
         cluster.get_attention()
         cluster.saveall()
         cluster.clean()
-        os.system("hdfs dfs -put -f /home/mark/isework/cloud-computing-netease-news/out/out.json hdfs://mark-pc:9000/out/out.json ")
-        os.system("hdfs dfs -put -f /home/mark/isework/cloud-computing-netease-news/out/outtime.json hdfs://mark-pc:9000/out/outtime.json ")
+        os.system(
+            "hdfs dfs -put -f /home/mark/isework/cloud-computing-netease-news/out/out.json hdfs://mark-pc:9000/out/out.json ")
+        os.system(
+            "hdfs dfs -put -f /home/mark/isework/cloud-computing-netease-news/out/outtime.json hdfs://mark-pc:9000/out/outtime.json ")
         time.sleep(1801)

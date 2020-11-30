@@ -7,6 +7,7 @@ from pyspark.streaming import StreamingContext
 
 # 导入分词jieba
 import jieba
+import numpy as np
 
 # 导入spark ml库
 from pyspark.ml.feature import HashingTF, IDF, Tokenizer
@@ -80,6 +81,9 @@ class Cluster:
         self.stopwords = [line.strip() for line in open(
             '/home/mark/isework/cloud-computing-netease-news/NewsAnalysis/stop_words.txt',
             encoding='UTF-8').readlines()]
+        # self.stopwords = [line.strip() for line in open(
+        #     'stop_words.txt',
+        #     encoding='UTF-8').readlines()]
 
     # 去除停用词
     def stopandtostr(self, seg):
@@ -270,7 +274,9 @@ class Cluster:
                 if count >= 10:
                     break
                 else:
-                    if self.all_news[tmp]['title'] not in outnews:
+                    if self.all_news[tmp]['title'] not in outnews \
+                        and self.all_news[num]['section']==self.all_news[tmp]['section']\
+                            and abs(self.all_time[num]-self.all_time[tmp])<=24*60:
                         outnews.append(self.all_news[tmp]['title'])
                         count += 1
 
@@ -289,6 +295,13 @@ class Cluster:
 
         with open('/home/mark/isework/cloud-computing-netease-news/out/outtime.json', 'w', encoding='utf-8') as f:
             json.dump({'time':time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),'timekeyword': self.timekeyword}, f, ensure_ascii=False)
+
+        # with open('../out/out.json', 'w', encoding='utf-8') as f:
+        #     json.dump(outlist1, f, ensure_ascii=False)
+        #
+        # with open('../out/outtime.json', 'w', encoding='utf-8') as f:
+        #     json.dump({'time': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), 'timekeyword': self.timekeyword},
+        #               f, ensure_ascii=False)
 
     # 利用hacker news热度算法进行计算，其中投票在这里改写为相似度超过30%的新闻数
     # 详情参见https://blog.csdn.net/ouzhuangzhuang/article/details/82467949?utm_medium=distribute.pc_relevant_t0.none-task-blog-searchFromBaidu-1.control&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-searchFromBaidu-1.control
@@ -362,18 +375,12 @@ class Cluster:
 
 # 求两个向量的点积
 def dianji(vec1, vec2):
-    oc = 0
-    for i in range(len(vec1)):
-        oc += vec1[i] * vec2[i]
-    return oc
+    return np.dot(vec1,vec2)
 
 
 # 求向量的范数
 def fanshu(vec):
-    oc = 0
-    for i in range(len(vec)):
-        oc += vec[i] * vec[i]
-    return oc ** 0.5
+    return np.linalg.norm(vec)
 
 
 # 求列表的前n个最大值的坐标数组
@@ -432,6 +439,8 @@ def tryHdfsPath(location):
 
 if __name__ == "__main__":
     cluster = Cluster('/home/mark/isework/cloud-computing-netease-news/data/news.json')  # 文件名注意修改
+    # os.environ['PYSPARK_PYTHON'] = '/usr/local/bin/python3.8'
+    # cluster=Cluster('../Data/news.json')
     while (True):
         os.system(
             "hdfs dfs -get -f hdfs://mark-pc:9000/json/news.json /home/mark/isework/cloud-computing-netease-news/data/news.json")

@@ -24,7 +24,7 @@ class Cluster:
     def __init__(self, file_name):
 
         # spark streaming初始化
-        self.spark = SparkSession.builder.appName("NewsAnalysis").getOrCreate()
+        self.spark = SparkSession.builder.appName("NewsAnalysis").master("local[*]").getOrCreate()
 
         # self.sc = self.spark.sparkContext
 
@@ -106,7 +106,9 @@ class Cluster:
 
         i = 0
         for item in objs:
+            print(item[:64])
             data = json.loads(item)
+
 
             if 'content' in data:
                 str = ''
@@ -275,8 +277,8 @@ class Cluster:
                     break
                 else:
                     if self.all_news[tmp]['title'] not in outnews \
-                        and self.all_news[num]['section']==self.all_news[tmp]['section']\
-                            and abs(self.all_time[num]-self.all_time[tmp])<=24*60:
+                        and self.all_news[num]['section'] == self.all_news[tmp]['section']\
+                            and abs(self.all_time[num]-self.all_time[tmp]) <= 24*60:
                         outnews.append(self.all_news[tmp]['title'])
                         count += 1
 
@@ -316,6 +318,8 @@ class Cluster:
                 if j >= 0.3:
                     points += 1
             self.attention.append((points - 1) / ((self.all_time[i] + 2) * g)*(10-int(self.all_news[i]['depth']))**2)
+            if self.all_news[i]['section'] == 'news':
+                self.attention[-1] *= 3
         maxi = max(self.attention)
         mini = min(self.attention)
         for i in range(self.len):

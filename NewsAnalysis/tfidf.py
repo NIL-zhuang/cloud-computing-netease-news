@@ -106,9 +106,11 @@ class Cluster:
 
         i = 0
         for item in objs:
-            print(item[:64])
-            data = json.loads(item)
-
+            try:
+                data = json.loads(item)
+            except json.decoder.JSONDecodeError:
+                print(item)
+                continue
 
             if 'content' in data:
                 str = ''
